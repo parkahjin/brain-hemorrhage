@@ -1,0 +1,93 @@
+# ============================================================
+# 뇌출혈 진단 시스템 - 백엔드 설정 파일
+# ============================================================
+#
+# 이 파일은 Spring Boot 애플리케이션의 모든 설정을 관리합니다.
+# YAML 형식으로 작성되어 가독성이 좋습니다.
+#
+# 주요 설정:
+# 1. 서버 설정 (포트)
+# 2. 데이터베이스 연결 설정
+# 3. JPA/Hibernate 설정
+# 4. JWT 토큰 설정
+# ============================================================
+
+# ============================================================
+# 1. 서버 설정
+# ============================================================
+server:
+  port: 8080  # 백엔드 서버 포트 (Streamlit은 8501 사용)
+
+# ============================================================
+# 2. Spring 기본 설정
+# ============================================================
+spring:
+  # 애플리케이션 이름
+  application:
+    name: brain-hemorrhage-backend
+
+  # ----------------------------------------------------------
+  # 데이터베이스 연결 설정 (MySQL)
+  # ----------------------------------------------------------
+  datasource:
+    # MySQL 연결 URL
+    # - localhost:3306 : 로컬 MySQL 서버, 기본 포트
+    # - brain_hemorrhage : 데이터베이스 이름 (미리 생성 필요)
+    # - useSSL=false : SSL 암호화 비활성화 (로컬 개발용)
+    # - allowPublicKeyRetrieval=true : 공개키 인증 허용
+    # - serverTimezone=Asia/Seoul : 한국 시간대 설정
+    url: jdbc:mysql://localhost:3306/brain_hemorrhage?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+
+    # MySQL 접속 계정 (본인 환경에 맞게 수정하세요)
+    username: root          # MySQL 사용자명
+    password: 1234          # MySQL 비밀번호 (본인 비밀번호로 변경!)
+
+    # MySQL 드라이버 클래스
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # ----------------------------------------------------------
+  # JPA (Java Persistence API) 설정
+  # ----------------------------------------------------------
+  jpa:
+    # Hibernate 설정
+    hibernate:      
+      ddl-auto: update # 엔티티의 변경 사항을 반영하여 자동으로 DB 업데이트
+
+    # SQL 쿼리 콘솔 출력 여부 (개발 중에는 true 권장)
+    show-sql: true
+
+    # SQL 쿼리 보기 좋게 포맷팅
+    properties:
+      hibernate:
+        format_sql: true
+        # MySQL 8 방언 사용
+        dialect: org.hibernate.dialect.MySQLDialect
+
+    # 뷰 렌더링 전까지 영속성 컨텍스트 유지
+    open-in-view: false
+
+# ============================================================
+# 3. JWT (JSON Web Token) 설정
+# ============================================================
+jwt:
+  # JWT 서명에 사용할 비밀키 (반드시 변경하세요!)
+  # - 최소 256비트(32자) 이상 권장
+  # - 실제 운영 환경에서는 환경변수로 관리
+  secret: BrainHemorrhageDiagnosisSystemSecretKeyForJWTTokenGeneration2024!@#$
+
+  # 토큰 유효 시간 (밀리초)
+  # - 3600000 = 1시간 (1000ms * 60초 * 60분)
+  # - 개발 중에는 길게, 운영 시에는 짧게 설정
+  expiration: 3600000
+
+# ============================================================
+# 4. 로깅 설정
+# ============================================================
+logging:
+  level:
+    # Spring Security 디버그 로그 (인증 문제 디버깅용)
+    org.springframework.security: DEBUG
+    # SQL 파라미터 값 출력
+    org.hibernate.type.descriptor.sql: DEBUG
+    # 우리 애플리케이션 로그
+    com.brain.hemorrhage: DEBUG

@@ -1,0 +1,530 @@
+<셀1>
+import tensorflow as tf
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras import layers, models
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.preprocessing import image
+import numpy as np
+
+# -----------------------------
+# 1. 데이터 준비
+# -----------------------------
+train_dir = "/content/drive/MyDrive/brain_ct/train"
+test_dir = "/content/drive/MyDrive/brain_ct/test"
+
+img_size = (224, 224)
+batch_size = 32
+
+train_datagen = ImageDataGenerator(
+    rescale=1./255,
+    horizontal_flip=True,
+    rotation_range=10,
+    zoom_range=0.1
+)
+test_datagen = ImageDataGenerator(rescale=1./255)
+
+train_generator = train_datagen.flow_from_directory(
+    train_dir,
+    target_size=img_size,
+    batch_size=batch_size,
+    class_mode='binary'
+)
+test_generator = test_datagen.flow_from_directory(
+    test_dir,
+    target_size=img_size,
+    batch_size=batch_size,
+    class_mode='binary',
+    shuffle=False
+)
+
+# -----------------------------
+# 2. CNN 모델 정의
+# -----------------------------
+def create_simple_cnn(input_shape=(224,224,3)):
+    model = models.Sequential([
+        layers.Conv2D(32, (3,3), activation='relu', input_shape=input_shape),
+        layers.MaxPooling2D(2,2),
+        layers.Conv2D(64, (3,3), activation='relu'),
+        layers.MaxPooling2D(2,2),
+        layers.Conv2D(128, (3,3), activation='relu'),
+        layers.MaxPooling2D(2,2),
+        layers.Flatten(),
+        layers.Dense(128, activation='relu'),
+        layers.Dense(1, activation='sigmoid')
+    ])
+    return model
+
+cnn_model = create_simple_cnn()
+cnn_model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+cnn_model.summary()
+
+# -----------------------------
+# 3. 학습
+# -----------------------------
+early_stop = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
+
+cnn_model.fit(
+    train_generator,
+    validation_data=test_generator,
+    epochs=10,
+    callbacks=[early_stop]
+)
+
+# -----------------------------
+# 4. 모델 저장
+# -----------------------------
+cnn_model.save("/content/drive/MyDrive/cnn_brain_ct.h5")
+
+# -----------------------------
+# 5. 테스트 데이터 정확도
+# -----------------------------
+loss, acc = cnn_model.evaluate(test_generator)
+print(f"CNN 모델 테스트 정확도: {acc*100:.2f}%")
+
+# -----------------------------
+# 6. 임의 이미지 예측
+# -----------------------------
+img_path = "/content/drive/MyDrive/brain_ct/test/hemorrhage/ds1_0_hemorrhage_1026_IMG-0001-00073.jpg"
+img = image.load_img(img_path, target_size=img_size)
+x = image.img_to_array(img)
+x = np.expand_dims(x, axis=0)
+x = x / 255.0
+
+pred = cnn_model.predict(x)[0][0]
+label = "hemorrhage" if pred >= 0.5 else "normal"
+print(f"CNN 모델 예측: {label} ({pred:.4f})")
+
+
+<셀2>
+import tensorflow as tf
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras import layers, models
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.preprocessing import image
+from tensorflow.keras.optimizers import Adam
+import numpy as np
+from google.colab import drive
+
+
+drive.mount('/content/drive')
+
+import os
+print(os.listdir("/content/drive/MyDrive"))
+
+print(os.listdir("/content/drive/MyDrive/brain_ct"))
+
+
+<셀3>
+# 필수 라이브러리 설치 (필요 시)
+!pip install tensorflow opencv-python matplotlib numpy pandas scikit-learn tqdm
+
+# 기본 라이브러리 임포트
+import os
+import cv2
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from tqdm import tqdm
+from sklearn.model_selection import train_test_split
+
+# 구글 드라이브 경로 설정
+base_path = "/content/drive/MyDrive"
+
+# 작업 폴더를 하나 지정 (원하는 폴더명으로 바꿔도 됨)
+project_path = os.path.join(base_path, "Colab Notebooks")
+print("작업 경로:", project_path)
+
+# 폴더 목록 확인 (정상 접근 확인)
+print(os.listdir(project_path))
+
+
+<셀4>
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
+from tensorflow.keras.optimizers import Adam
+
+# 예시 데이터 (여기서는 랜덤 데이터로 대체)
+# 실제로는 CT 이미지와 라벨로 대체해야 함
+import numpy as np
+num_samples = 100
+img_height, img_width = 64, 64
+num_classes = 2
+
+X_train = np.random.rand(num_samples, img_height, img_width, 1).astype(np.float32)
+y_train = tf.keras.utils.to_categorical(np.random.randint(0, num_classes, num_samples), num_classes)
+
+# 테스트할 하이퍼파라미터
+learning_rates = [0.01, 0.001, 0.0001]
+epochs_list = [5]  # 각 에폭은 5로 고정
+
+# 결과 저장용
+results = {}
+
+for lr in learning_rates:
+    for epochs in epochs_list:
+        # 모델 정의
+        model = Sequential([
+            Conv2D(32, (3,3), activation='relu', input_shape=(img_height, img_width,1)),
+            MaxPooling2D((2,2)),
+            Flatten(),
+            Dense(64, activation='relu'),
+            Dense(num_classes, activation='softmax')
+        ])
+        
+        # 옵티마이저 설정
+        optimizer = Adam(learning_rate=lr)
+        model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['accuracy'])
+        
+        # 학습
+        print(f"Training with learning rate={lr}, epochs={epochs}")
+        history = model.fit(X_train, y_train, epochs=epochs, batch_size=8, verbose=1)
+        
+        # 최종 정확도 저장
+        results[f"lr_{lr}_epochs_{epochs}"] = history.history['accuracy'][-1]
+
+print("모든 테스트 완료!")
+print(results)
+
+
+<셀5>
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.callbacks import EarlyStopping
+
+# -----------------------------
+# 학습률 후보
+# -----------------------------
+learning_rates = [0.01, 0.001, 0.0001]
+
+results = {}
+
+# -----------------------------
+# 학습률별 실험
+# -----------------------------
+for lr in learning_rates:
+    print("\n====================================")
+    print(f"📌 Learning Rate = {lr} 실험 시작")
+    print("====================================")
+
+    # 모델 새로 생성
+    model = create_simple_cnn()
+    model.compile(
+        optimizer=Adam(learning_rate=lr),
+        loss='binary_crossentropy',
+        metrics=['accuracy']
+    )
+
+    # 조기 종료
+    early_stop = EarlyStopping(
+        monitor='val_loss',
+        patience=2,
+        restore_best_weights=True
+    )
+
+    # 모델 학습 (epochs = 5)
+    history = model.fit(
+        train_generator,
+        validation_data=test_generator,
+        epochs=5,
+        callbacks=[early_stop],
+        verbose=1
+    )
+
+    # 검증 정확도 저장
+    val_acc = max(history.history['val_accuracy'])
+    results[lr] = val_acc
+    print(f"➡️ LR {lr} 최종 검증 정확도: {val_acc:.4f}")
+
+# -----------------------------
+# 결과 비교 출력
+# -----------------------------
+print("\n===== 학습률별 성능 요약 =====")
+for lr, acc in results.items():
+    print(f"LR={lr} → Val Accuracy = {acc:.4f}")
+
+# 가장 좋은 학습률 찾기
+best_lr = max(results, key=results.get)
+print(f"\n🎯 가장 성능이 좋은 학습률: {best_lr}")
+
+
+<셀6>
+import tensorflow as tf
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras import layers, models
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.models import Model
+from tensorflow.keras.preprocessing import image
+import numpy as np
+
+# -----------------------------
+# 1. 데이터 준비
+# -----------------------------
+train_dir = "/content/drive/MyDrive/brain_ct/train"
+test_dir = "/content/drive/MyDrive/brain_ct/test"
+
+img_size = (224, 224)
+batch_size = 32
+
+train_datagen = ImageDataGenerator(
+    rescale=1./255,
+    horizontal_flip=True,
+    rotation_range=10,
+    zoom_range=0.1
+)
+test_datagen = ImageDataGenerator(rescale=1./255)
+
+train_generator = train_datagen.flow_from_directory(
+    train_dir,
+    target_size=img_size,
+    batch_size=batch_size,
+    class_mode='binary'
+)
+test_generator = test_datagen.flow_from_directory(
+    test_dir,
+    target_size=img_size,
+    batch_size=batch_size,
+    class_mode='binary',
+    shuffle=False
+)
+
+# -----------------------------
+# 2. ResNet from scratch 정의
+# -----------------------------
+def create_resnet_from_scratch(input_shape=(224,224,3)):
+    inputs = layers.Input(shape=input_shape)
+    x = layers.Conv2D(64, (7,7), strides=2, padding='same', activation='relu')(inputs)
+    x = layers.MaxPooling2D(3, strides=2, padding='same')(x)
+    for filters in [64,128,256]:
+        x = layers.Conv2D(filters, (3,3), activation='relu', padding='same')(x)
+        x = layers.Conv2D(filters, (3,3), activation='relu', padding='same')(x)
+        x = layers.MaxPooling2D(2,2)(x)
+    x = layers.GlobalAveragePooling2D()(x)
+    x = layers.Dense(128, activation='relu')(x)
+    outputs = layers.Dense(1, activation='sigmoid')(x)
+    model = Model(inputs, outputs)
+    return model
+
+resnet_scratch = create_resnet_from_scratch()
+resnet_scratch.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+resnet_scratch.summary()
+
+# -----------------------------
+# 3. 학습
+# -----------------------------
+early_stop = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
+
+resnet_scratch.fit(
+    train_generator,
+    validation_data=test_generator,
+    epochs=10,
+    callbacks=[early_stop]
+)
+
+# -----------------------------
+# 4. 모델 저장
+# -----------------------------
+resnet_scratch.save("/content/drive/MyDrive/resnet_scratch_brain_ct.h5")
+
+# -----------------------------
+# 5. 테스트 데이터 정확도
+# -----------------------------
+loss, acc = resnet_scratch.evaluate(test_generator)
+print(f"ResNet scratch 테스트 정확도: {acc*100:.2f}%")
+
+# -----------------------------
+# 6. 임의 이미지 예측
+# -----------------------------
+img_path = "/content/drive/MyDrive/brain_ct/test/hemorrhage/ds1_0_hemorrhage_1026_IMG-0001-00073.jpg"
+img = image.load_img(img_path, target_size=img_size)
+x = image.img_to_array(img)
+x = np.expand_dims(x, axis=0)
+x = x / 255.0
+
+pred = resnet_scratch.predict(x)[0][0]
+label = "hemorrhage" if pred >= 0.5 else "normal"
+print(f"ResNet scratch 예측: {label} ({pred:.4f})")
+
+
+<셀7>
+import tensorflow as tf
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras import layers, models
+from tensorflow.keras.applications import ResNet50
+from tensorflow.keras.models import Model
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.preprocessing import image
+import numpy as np
+
+# -----------------------------
+# 1. 데이터 준비
+# -----------------------------
+train_dir = "/content/drive/MyDrive/brain_ct/train"
+test_dir = "/content/drive/MyDrive/brain_ct/test"
+
+img_size = (224, 224)
+batch_size = 32
+
+train_datagen = ImageDataGenerator(
+    rescale=1./255,
+    horizontal_flip=True,
+    rotation_range=10,
+    zoom_range=0.1
+)
+test_datagen = ImageDataGenerator(rescale=1./255)
+
+train_generator = train_datagen.flow_from_directory(
+    train_dir,
+    target_size=img_size,
+    batch_size=batch_size,
+    class_mode='binary'
+)
+test_generator = test_datagen.flow_from_directory(
+    test_dir,
+    target_size=img_size,
+    batch_size=batch_size,
+    class_mode='binary',
+    shuffle=False
+)
+
+# -----------------------------
+# 2. ResNet50 전이학습 정의 (freeze)
+# -----------------------------
+base_model = ResNet50(weights='imagenet', include_top=False, input_shape=(224,224,3))
+for layer in base_model.layers:
+    layer.trainable = False
+
+x = layers.GlobalAveragePooling2D()(base_model.output)
+x = layers.Dense(128, activation='relu')(x)
+outputs = layers.Dense(1, activation='sigmoid')(x)
+
+resnet_transfer = Model(inputs=base_model.input, outputs=outputs)
+resnet_transfer.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+resnet_transfer.summary()
+
+# -----------------------------
+# 3. 학습
+# -----------------------------
+early_stop = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
+
+resnet_transfer.fit(
+    train_generator,
+    validation_data=test_generator,
+    epochs=10,
+    callbacks=[early_stop]
+)
+
+# -----------------------------
+# 4. 모델 저장
+# -----------------------------
+resnet_transfer.save("/content/drive/MyDrive/resnet_transfer_brain_ct.h5")
+
+# -----------------------------
+# 5. 테스트 데이터 정확도
+# -----------------------------
+loss, acc = resnet_transfer.evaluate(test_generator)
+print(f"ResNet50 transfer 테스트 정확도: {acc*100:.2f}%")
+
+# -----------------------------
+# 6. 임의 이미지 예측
+# -----------------------------
+img_path = "/content/drive/MyDrive/brain_ct/test/hemorrhage/ds1_0_hemorrhage_1026_IMG-0001-00073.jpg"
+img = image.load_img(img_path, target_size=img_size)
+x = image.img_to_array(img)
+x = np.expand_dims(x, axis=0)
+x = x / 255.0
+
+pred = resnet_transfer.predict(x)[0][0]
+label = "hemorrhage" if pred >= 0.5 else "normal"
+print(f"ResNet50 transfer 예측: {label} ({pred:.4f})")
+
+
+
+<셀8>
+from google.colab import drive
+drive.mount('/content/drive')
+
+import tensorflow as tf
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, Dropout
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.applications.resnet50 import ResNet50, preprocess_input
+
+# -----------------------------
+# 1. 데이터 준비
+# -----------------------------
+train_dir = "/content/drive/MyDrive/brain_ct/train"
+test_dir = "/content/drive/MyDrive/brain_ct/test"
+
+# 데이터 증강 (preprocess_input 포함)
+train_datagen = ImageDataGenerator(
+    preprocessing_function=preprocess_input,
+    rotation_range=15,
+    width_shift_range=0.1,
+    height_shift_range=0.1,
+    horizontal_flip=True,
+    fill_mode='nearest'
+)
+
+test_datagen = ImageDataGenerator(
+    preprocessing_function=preprocess_input
+)
+
+train_generator = train_datagen.flow_from_directory(
+    train_dir,
+    target_size=(128,128),  # 이미지 크기 축소
+    batch_size=32,           # 배치 사이즈 증가
+    class_mode='binary'
+)
+
+test_generator = test_datagen.flow_from_directory(
+    test_dir,
+    target_size=(128,128),
+    batch_size=32,
+    class_mode='binary',
+    shuffle=False
+)
+
+# -----------------------------
+# 2. ResNet50 base model 불러오기 (pretrained)
+# -----------------------------
+base_model = ResNet50(
+    weights='imagenet',
+    include_top=False,
+    input_shape=(128,128,3)
+)
+
+# -----------------------------
+# 3. Top layers 구성
+# -----------------------------
+x = base_model.output
+x = GlobalAveragePooling2D()(x)
+x = Dense(128, activation='relu')(x)
+x = Dropout(0.3)(x)
+predictions = Dense(1, activation='sigmoid')(x)
+
+model = Model(inputs=base_model.input, outputs=predictions)
+
+# -----------------------------
+# 4. 학습: base model freeze (Dense만 학습)
+# -----------------------------
+for layer in base_model.layers:
+    layer.trainable = False
+
+model.compile(
+    optimizer=Adam(learning_rate=1e-3),
+    loss='binary_crossentropy',
+    metrics=['accuracy']
+)
+
+history = model.fit(
+    train_generator,
+    epochs=5,                 # epoch 최소화
+    validation_data=test_generator
+)
+
+# -----------------------------
+# 5. 모델 저장
+# -----------------------------
+model.save("/content/drive/MyDrive/resnet_transfer_fast_brain_ct.h5")
+

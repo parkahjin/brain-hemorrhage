@@ -1,0 +1,38 @@
+# Eclipse IDE
+backend/.metadata/
+backend/.settings/
+backend/.classpath
+backend/.factorypath
+backend/.project
+
+# Maven Build
+backend/target/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.env
+.venv/
+venv/
+
+# Claude
+.claude/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+~$*
+nul
+
+# Streamlit
+.streamlit/
