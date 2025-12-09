@@ -74,6 +74,11 @@ init_session()
 # ============================================================
 st.markdown("""
     <style>
+    /* 페이지 네비게이션 메뉴 숨기기 */
+    [data-testid="stSidebarNav"] {
+        display: none;
+    }
+
     /* 로그인 화면 스타일 */
     .login-container {
         max-width: 400px;
@@ -190,6 +195,15 @@ if not is_logged_in():
     # 로그인 화면
     # ================================================================
 
+    # 로그인 화면에서 사이드바 숨기기
+    st.markdown("""
+        <style>
+        [data-testid="stSidebar"] {
+            display: none;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
     # 헤더
     st.markdown("""
         <div class="login-header">
@@ -202,49 +216,50 @@ if not is_logged_in():
     col1, col2, col3 = st.columns([1, 2, 1])
 
     with col2:
-        # 로그인 폼
+        # 로그인 폼 (엔터로 제출 가능)
         st.markdown("### 로그인")
 
         # 서버 상태 확인
         server_ok = check_server_health()
         if not server_ok:
             st.warning("백엔드 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인하세요.")
-            st.info("서버 주소: http://localhost:8080")
 
-        # 아이디 입력
-        username = st.text_input(
-            "아이디",
-            placeholder="아이디를 입력하세요",
-            key="login_username"
-        )
+        # Form으로 감싸서 엔터 키로 제출 가능하게
+        with st.form("login_form"):
+            # 아이디 입력
+            username = st.text_input(
+                "아이디",
+                placeholder="아이디를 입력하세요"
+            )
 
-        # 비밀번호 입력
-        password = st.text_input(
-            "비밀번호",
-            type="password",
-            placeholder="비밀번호를 입력하세요",
-            key="login_password"
-        )
+            # 비밀번호 입력
+            password = st.text_input(
+                "비밀번호",
+                type="password",
+                placeholder="비밀번호를 입력하세요"
+            )
 
-        st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown("<br>", unsafe_allow_html=True)
 
-        # 로그인 버튼
-        if st.button("로그인", type="primary", use_container_width=True):
-            if not username:
-                st.error("아이디를 입력해주세요.")
-            elif not password:
-                st.error("비밀번호를 입력해주세요.")
-            else:
-                # 로그인 시도
-                with st.spinner("로그인 중..."):
-                    result = login(username, password)
+            # 로그인 버튼 (폼 제출)
+            submitted = st.form_submit_button("로그인", type="primary", use_container_width=True)
 
-                if result.get('success'):
-                    st.success(f"환영합니다, {result.get('name')}님!")
-                    # 페이지 새로고침하여 진단 화면으로 전환
-                    st.rerun()
+            if submitted:
+                if not username:
+                    st.error("아이디를 입력해주세요.")
+                elif not password:
+                    st.error("비밀번호를 입력해주세요.")
                 else:
-                    st.error(result.get('message', '로그인에 실패했습니다.'))
+                    # 로그인 시도
+                    with st.spinner("로그인 중..."):
+                        result = login(username, password)
+
+                    if result.get('success'):
+                        st.success(f"환영합니다, {result.get('name')}님!")
+                        # 페이지 새로고침하여 진단 화면으로 전환
+                        st.rerun()
+                    else:
+                        st.error(result.get('message', '로그인에 실패했습니다.'))
 
         st.markdown("<br>", unsafe_allow_html=True)
 
@@ -260,18 +275,6 @@ if not is_logged_in():
         # 회원가입 버튼
         if st.button("회원가입하기", use_container_width=True):
             st.switch_page("pages/signup.py")
-
-        # 서버 정보
-        st.markdown("<br><br>", unsafe_allow_html=True)
-        with st.expander("서버 연결 정보"):
-            st.markdown("""
-            **백엔드 서버**: Spring Boot (포트 8080)
-
-            서버가 실행되지 않은 경우:
-            1. Spring Tool Suite(STS) 실행
-            2. backend 프로젝트 Import
-            3. BrainHemorrhageApplication 실행
-            """)
 
     # 푸터
     st.markdown("<br><br>", unsafe_allow_html=True)
@@ -300,8 +303,12 @@ else:
         </div>
     """, unsafe_allow_html=True)
 
+    # 마이페이지 버튼
+    if st.sidebar.button("📋 마이페이지", use_container_width=True):
+        st.switch_page("pages/mypage.py")
+
     # 로그아웃 버튼
-    if st.sidebar.button("로그아웃", use_container_width=True):
+    if st.sidebar.button("🚪 로그아웃", use_container_width=True):
         logout()
         st.rerun()
 
@@ -321,25 +328,9 @@ else:
         help="ResNet50 Transfer (Fast) 모델을 권장합니다 (인터넷 이미지 100% 정확도)"
     )
 
-    # Grad-CAM 옵션
-    show_gradcam = st.sidebar.checkbox(
-        "Grad-CAM 시각화 표시",
-        value=True,
-        help="진단 근거를 시각적으로 표시합니다"
-    )
-
-    # 고급 옵션
-    with st.sidebar.expander("🔧 고급 옵션"):
-        threshold = st.slider(
-            "진단 임계값",
-            min_value=0.0,
-            max_value=1.0,
-            value=0.5,
-            step=0.05,
-            help="뇌출혈로 판단하는 확률 임계값"
-        )
-
-    # Grad-CAM 투명도는 고정값 사용
+    # Grad-CAM 및 임계값 고정값 사용
+    show_gradcam = True
+    threshold = 0.5
     gradcam_alpha = 0.4
 
     # 정보

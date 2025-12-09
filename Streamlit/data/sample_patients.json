@@ -1,0 +1,91 @@
+{
+  "patients": [
+    {
+      "patient_id": "P001",
+      "name": "김영수",
+      "birth_date": "1965-03-15",
+      "gender": "남",
+      "ct_records": [
+        {
+          "scan_id": "CT001",
+          "scan_date": "2025-12-01",
+          "result": "hemorrhage",
+          "probability": 0.87,
+          "estimated_volume_cc": 25.3,
+          "location": "우측 기저핵",
+          "image": "hemorrhage.jpg"
+        },
+        {
+          "scan_id": "CT002",
+          "scan_date": "2025-12-05",
+          "result": "hemorrhage",
+          "probability": 0.72,
+          "estimated_volume_cc": 18.5,
+          "location": "우측 기저핵",
+          "image": "hemorrhage2.jpg"
+        },
+        {
+          "scan_id": "CT003",
+          "scan_date": "2025-12-09",
+          "result": "hemorrhage",
+          "probability": 0.45,
+          "estimated_volume_cc": 8.2,
+          "location": "우측 기저핵",
+          "image": "hemorrhage3.jpg"
+        }
+      ]
+    },
+    {
+      "patient_id": "P002",
+      "name": "이미경",
+      "birth_date": "1978-08-22",
+      "gender": "여",
+      "ct_records": [
+        {
+          "scan_id": "CT004",
+          "scan_date": "2025-12-03",
+          "result": "normal",
+          "probability": 0.12,
+          "estimated_volume_cc": 0,
+          "location": "-",
+          "image": "normal.jpg"
+        },
+        {
+          "scan_id": "CT005",
+          "scan_date": "2025-12-07",
+          "result": "normal",
+          "probability": 0.08,
+          "estimated_volume_cc": 0,
+          "location": "-",
+          "image": "normal2.jpg"
+        }
+      ]
+    },
+    {
+      "patient_id": "P003",
+      "name": "박철호",
+      "birth_date": "1952-11-30",
+      "gender": "남",
+      "ct_records": [
+        {
+          "scan_id": "CT006",
+          "scan_date": "2025-11-28",
+          "result": "hemorrhage",
+          "probability": 0.92,
+          "estimated_volume_cc": 32.1,
+          "location": "좌측 측두엽",
+          "image": "hemorrhage.jpg"
+        },
+        {
+          "scan_id": "CT007",
+          "scan_date": "2025-12-02",
+          "result": "hemorrhage",
+          "probability": 0.95,
+          "estimated_volume_cc": 38.7,
+          "location": "좌측 측두엽 (확장)",
+          "image": "hemorrhage2.jpg"
+        }
+      ]
+    }
+  ]
+}

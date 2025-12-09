@@ -55,6 +55,14 @@ init_session()
 # ============================================================
 st.markdown("""
     <style>
+    /* 페이지 네비게이션 및 사이드바 숨기기 */
+    [data-testid="stSidebarNav"] {
+        display: none;
+    }
+    [data-testid="stSidebar"] {
+        display: none;
+    }
+
     /* 전체 페이지 스타일 */
     .main {
         max-width: 500px;
