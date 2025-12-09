@@ -81,6 +81,21 @@ public class AuthResponse {
      */
     private String name;
 
+    /**
+     * 로그인한 사용자 이메일
+     *
+     * 로그인 성공 시에만 값이 있음
+     */
+    private String email;
+
+    /**
+     * 계정 생성일 (가입일)
+     *
+     * 로그인 성공 시에만 값이 있음
+     * 형식: "yyyy-MM-dd"
+     */
+    private String createdAt;
+
     // ============================================================
     // 편의 메서드: 자주 사용하는 응답 생성 헬퍼
     // ============================================================
@@ -91,15 +106,19 @@ public class AuthResponse {
      * @param token JWT 토큰
      * @param username 사용자 아이디
      * @param name 사용자 이름
+     * @param email 사용자 이메일
+     * @param createdAt 가입일
      * @return 성공 응답 객체
      */
-    public static AuthResponse loginSuccess(String token, String username, String name) {
+    public static AuthResponse loginSuccess(String token, String username, String name, String email, String createdAt) {
         return AuthResponse.builder()
                 .success(true)
                 .message("로그인 성공")
                 .token(token)
                 .username(username)
                 .name(name)
+                .email(email)
+                .createdAt(createdAt)
                 .build();
     }
 

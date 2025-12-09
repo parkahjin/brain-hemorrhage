@@ -141,6 +141,32 @@ def get_username() -> Optional[str]:
     return None
 
 
+def get_email() -> Optional[str]:
+    """
+    로그인한 사용자 이메일 반환
+
+    Returns:
+        Optional[str]: 사용자 이메일 (로그인 안 된 경우 None)
+    """
+    user_info = st.session_state.get('user_info')
+    if user_info:
+        return user_info.get('email')
+    return None
+
+
+def get_created_at() -> Optional[str]:
+    """
+    로그인한 사용자 가입일 반환
+
+    Returns:
+        Optional[str]: 가입일 (로그인 안 된 경우 None)
+    """
+    user_info = st.session_state.get('user_info')
+    if user_info:
+        return user_info.get('createdAt')
+    return None
+
+
 def get_jwt_token() -> Optional[str]:
     """
     저장된 JWT 토큰 반환
@@ -201,7 +227,9 @@ def login(username: str, password: str) -> Dict[str, Any]:
             st.session_state.jwt_token = data.get('token')
             st.session_state.user_info = {
                 "username": data.get('username'),
-                "name": data.get('name')
+                "name": data.get('name'),
+                "email": data.get('email'),
+                "createdAt": data.get('createdAt')
             }
             st.session_state.logged_in = True
 

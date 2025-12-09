@@ -12,6 +12,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.format.DateTimeFormatter;
+
 /**
  * ============================================================
  * 인증 서비스 클래스
@@ -157,9 +159,14 @@ public class AuthService {
         // 4. JWT 토큰 생성
         String token = jwtTokenProvider.createToken(user.getUsername());
 
-        // 5. 성공 응답 반환
+        // 5. 가입일 포맷팅
+        String createdAt = user.getCreatedAt() != null
+                ? user.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+                : null;
+
+        // 6. 성공 응답 반환
         log.info("로그인 성공 - 아이디: {}", request.getUsername());
-        return AuthResponse.loginSuccess(token, user.getUsername(), user.getName());
+        return AuthResponse.loginSuccess(token, user.getUsername(), user.getName(), user.getEmail(), createdAt);
     }
 
     /**
@@ -179,11 +186,16 @@ public class AuthService {
             User user = userRepository.findByUsername(username).orElse(null);
 
             if (user != null) {
+                String createdAt = user.getCreatedAt() != null
+                        ? user.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+                        : null;
                 return AuthResponse.builder()
                         .success(true)
                         .message("토큰 유효")
                         .username(user.getUsername())
                         .name(user.getName())
+                        .email(user.getEmail())
+                        .createdAt(createdAt)
                         .build();
             }
         }

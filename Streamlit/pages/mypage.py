@@ -26,7 +26,7 @@ from PIL import Image
 # 상위 폴더의 모듈을 import하기 위해 경로 추가
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from auth_utils import init_session, is_logged_in, get_user_name, get_username, logout
+from auth_utils import init_session, is_logged_in, get_user_name, get_username, get_email, get_created_at, logout
 
 # ============================================================
 # 페이지 설정
@@ -210,11 +210,11 @@ with col_left:
         </div>
         <div class="info-item">
             <span class="info-label">이메일</span>
-            <span class="info-value">-</span>
+            <span class="info-value">{get_email() or '-'}</span>
         </div>
         <div class="info-item">
             <span class="info-label">가입일</span>
-            <span class="info-value">-</span>
+            <span class="info-value">{get_created_at() or '-'}</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
